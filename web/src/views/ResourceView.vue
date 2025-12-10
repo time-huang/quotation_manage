@@ -97,7 +97,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import request from '../utils/request'
 
@@ -111,6 +111,9 @@ const total = ref(0)
 const dialogVisible = ref(false)
 const dialogTitle = ref('新增资源')
 const editingResource = ref(null)
+
+// 表单引用
+const resourceForm = ref(null)
 
 // 表单数据
 const formData = reactive({
@@ -264,7 +267,8 @@ const handleCurrentChange = (page) => {
 
 <style scoped>
 .resource-view {
-  padding: 20px;
+  padding: 0;
+  height: 100%;
 }
 
 .resource-card {
