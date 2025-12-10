@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import ResourceView from '../views/ResourceView.vue'
 import QuotationView from '../views/QuotationView.vue'
+import ProjectView from '../views/ProjectView.vue'
 
 const routes = [
   {
@@ -12,6 +13,11 @@ const routes = [
     path: '/quotation',
     name: 'quotation',
     component: QuotationView
+  },
+  {
+    path: '/project',
+    name: 'project',
+    component: ProjectView
   }
 ]
 

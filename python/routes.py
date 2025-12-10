@@ -1,7 +1,82 @@
 from flask import Blueprint, request, jsonify
-from models import Resource, Quotation
+from models import Resource, Quotation, Project
 
 api_bp = Blueprint('api', __name__)
+
+# 项目相关路由
+@api_bp.route('/projects', methods=['GET'])
+def get_projects():
+    """ 获取所有项目 """
+    projects = Project.get_all()
+    return jsonify({'success': True, 'data': projects})
+
+@api_bp.route('/projects/<int:project_id>', methods=['GET'])
+def get_project(project_id):
+    """ 根据ID获取项目 """
+    project = Project.get_by_id(project_id)
+    if project:
+        return jsonify({'success': True, 'data': project})
+    else:
+        return jsonify({'success': False, 'message': 'Project not found'}), 404
+
+@api_bp.route('/projects', methods=['POST'])
+def create_project():
+    """ 创建项目 """
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'message': 'No data provided'}), 400
+    
+    # 验证必填字段
+    required_fields = ['name', 'project_date']
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return jsonify({'success': False, 'message': f'Missing required field: {field}'}), 400
+    
+    project_id = Project.create(data)
+    if project_id:
+        project = Project.get_by_id(project_id)
+        return jsonify({'success': True, 'data': project}), 201
+    else:
+        return jsonify({'success': False, 'message': 'Failed to create project'}), 500
+
+@api_bp.route('/projects/<int:project_id>', methods=['PUT'])
+def update_project(project_id):
+    """ 更新项目 """
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'message': 'No data provided'}), 400
+    
+    # 验证项目是否存在
+    existing_project = Project.get_by_id(project_id)
+    if not existing_project:
+        return jsonify({'success': False, 'message': 'Project not found'}), 404
+    
+    # 验证必填字段
+    required_fields = ['name', 'project_date']
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return jsonify({'success': False, 'message': f'Missing required field: {field}'}), 400
+    
+    success = Project.update(project_id, data)
+    if success:
+        project = Project.get_by_id(project_id)
+        return jsonify({'success': True, 'data': project})
+    else:
+        return jsonify({'success': False, 'message': 'Failed to update project'}), 500
+
+@api_bp.route('/projects/<int:project_id>', methods=['DELETE'])
+def delete_project(project_id):
+    """ 删除项目 """
+    # 验证项目是否存在
+    existing_project = Project.get_by_id(project_id)
+    if not existing_project:
+        return jsonify({'success': False, 'message': 'Project not found'}), 404
+    
+    success = Project.delete(project_id)
+    if success:
+        return jsonify({'success': True, 'message': 'Project deleted successfully'})
+    else:
+        return jsonify({'success': False, 'message': 'Failed to delete project'}), 500
 
 # 资源相关路由
 @api_bp.route('/resources', methods=['GET'])
