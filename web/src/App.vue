@@ -1,20 +1,34 @@
 <script setup>
 import { RouterView } from 'vue-router'
-import { Menu as MenuIcon, Document as DocumentIcon } from '@element-plus/icons-vue'
+import { ref } from 'vue'
+import { Menu as MenuIcon, Document as DocumentIcon, Expand as ExpandIcon, Fold as FoldIcon } from '@element-plus/icons-vue'
+
+// 控制菜单收起/展开状态
+const isCollapse = ref(false)
 </script>
 
 <template>
   <div class="app-container">
     <!-- 侧边栏导航 -->
-    <aside class="sidebar">
+    <aside class="sidebar" :class="{ 'sidebar-collapsed': isCollapse }">
       <div class="sidebar-header">
-        <h2>报价管理系统</h2>
+        <h2 v-if="!isCollapse">报价管理系统</h2>
+        <el-icon v-else><MenuIcon /></el-icon>
+        <el-button
+          class="collapse-btn"
+          type="text"
+          @click="isCollapse = !isCollapse"
+        >
+          <el-icon><ExpandIcon v-if="isCollapse" /><FoldIcon v-else /></el-icon>
+        </el-button>
       </div>
       <nav class="sidebar-nav">
         <el-menu
           :default-active="$route.path"
           class="el-menu-vertical-demo"
           router
+          :collapse="isCollapse"
+          :collapse-transition="false"
         >
           <el-menu-item index="/">
             <el-icon><MenuIcon /></el-icon>
@@ -48,18 +62,39 @@ import { Menu as MenuIcon, Document as DocumentIcon } from '@element-plus/icons-
   color: #fff;
   display: flex;
   flex-direction: column;
+  transition: width 0.3s ease;
+}
+
+.sidebar-collapsed {
+  width: 64px;
 }
 
 .sidebar-header {
   padding: 20px;
   background-color: #263445;
   border-bottom: 1px solid #1f2d3d;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.collapse-btn {
+  color: #fff;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sidebar-header h2 {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar-nav {

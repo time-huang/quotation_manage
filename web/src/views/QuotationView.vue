@@ -236,6 +236,9 @@ const formData = reactive({
   items: []
 })
 
+// 表单引用
+const quotationForm = ref(null)
+
 // 资源选择相关
 const resourceList = ref([])
 const selectedResourceId = ref('')
@@ -485,7 +488,8 @@ const handleCurrentChange = (page) => {
 
 <style scoped>
 .quotation-view {
-  padding: 20px;
+  padding: 0;
+  height: 100%;
 }
 
 .quotation-card {
