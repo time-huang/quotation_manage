@@ -11,12 +11,23 @@
 - 删除资源
 - 资源字段：id、名称、备注、单位、成本价、销售价
 
+### 项目管理
+- 项目列表展示
+- 新增项目
+- 修改项目
+- 删除项目
+- 项目字段：id、项目名称、项目日期
+- 支持创建多个分组
+- 每个分组支持关联多个资源
+- 分组字段：id、项目id、分组名称
+- 分组资源关联：分组id、资源id、数量
+
 ### 报价管理
 - 报价列表展示
 - 新增报价
 - 修改报价
 - 删除报价
-- 报价字段：id、项目名称、日期、总成本、总销售价、利润
+- 报价字段：id、项目id（关联项目表）、日期、总成本、总销售价、利润
 - 支持关联多个资源作为子表
 
 ## 技术栈
@@ -53,7 +64,8 @@ quotation_manage/
 │   │   │   └── QuotationForm.vue
 │   │   ├── views/          # 页面目录
 │   │   │   ├── ResourceView.vue
-│   │   │   └── QuotationView.vue
+│   │   │   ├── QuotationView.vue
+│   │   │   └── ProjectView.vue
 │   │   ├── router/         # 路由配置
 │   │   │   └── index.js
 │   │   └── utils/          # 工具函数
@@ -94,9 +106,17 @@ npm run dev
 - `PUT /api/resources/<id>` - 修改资源
 - `DELETE /api/resources/<id>` - 删除资源
 
+### 项目接口
+- `GET /api/projects` - 获取项目列表
+- `POST /api/projects` - 新增项目
+- `GET /api/projects/<id>` - 获取项目详情
+- `PUT /api/projects/<id>` - 修改项目
+- `DELETE /api/projects/<id>` - 删除项目
+
 ### 报价接口
 - `GET /api/quotations` - 获取报价列表
 - `POST /api/quotations` - 新增报价
+- `GET /api/quotations/<id>` - 获取报价详情
 - `PUT /api/quotations/<id>` - 修改报价
 - `DELETE /api/quotations/<id>` - 删除报价
 - `GET /api/quotations/<id>/items` - 获取报价资源项

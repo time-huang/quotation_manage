@@ -1,7 +1,7 @@
 <script setup>
 import { RouterView } from 'vue-router'
 import { ref } from 'vue'
-import { Menu as MenuIcon, Document as DocumentIcon, Expand as ExpandIcon, Fold as FoldIcon } from '@element-plus/icons-vue'
+import { Menu as MenuIcon, Document as DocumentIcon, Folder as FolderIcon, Expand as ExpandIcon, Fold as FoldIcon } from '@element-plus/icons-vue'
 
 // 控制菜单收起/展开状态
 const isCollapse = ref(false)
@@ -37,6 +37,10 @@ const isCollapse = ref(false)
           <el-menu-item index="/quotation">
             <el-icon><DocumentIcon /></el-icon>
             <span>报价管理</span>
+          </el-menu-item>
+          <el-menu-item index="/project">
+            <el-icon><FolderIcon /></el-icon>
+            <span>项目管理</span>
           </el-menu-item>
         </el-menu>
       </nav>
