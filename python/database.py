@@ -44,6 +44,8 @@ def create_tables():
                                             group_id INTEGER NOT NULL,
                                             resource_id INTEGER NOT NULL,
                                             quantity INTEGER NOT NULL DEFAULT 1,
+                                            cost_price_snapshot REAL NOT NULL,
+                                            sale_price_snapshot REAL NOT NULL,
                                             FOREIGN KEY (group_id) REFERENCES project_groups (id) ON DELETE CASCADE,
                                             FOREIGN KEY (resource_id) REFERENCES resources (id) ON DELETE CASCADE
                                         ); '''

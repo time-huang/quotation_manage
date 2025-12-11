@@ -26,7 +26,7 @@
               <el-icon><Edit /></el-icon>
               编辑
             </el-button>
-            <el-button type="danger" size="small" @click="deleteProject(row.id)">
+            <el-button type="danger" size="small" @click="handleDeleteProject(row.id)">
               <el-icon><Delete /></el-icon>
               删除
             </el-button>
@@ -133,6 +133,18 @@
                       <el-table-column prop="name" label="资源名称" />
                       <el-table-column prop="unit" label="单位" width="100" />
                       <el-table-column prop="quantity" label="数量" width="100" />
+                      <el-table-column label="成本价" width="120">
+                        <template #default="{ row }">
+                          <span :class="{ 'price-changed': row.price_changed }">{{ row.cost_price_snapshot || row.cost_price }}</span>
+                          <span v-if="row.price_changed" class="price-change-hint"> (已变更)</span>
+                        </template>
+                      </el-table-column>
+                      <el-table-column label="售价" width="120">
+                        <template #default="{ row }">
+                          <span :class="{ 'price-changed': row.price_changed }">{{ row.sale_price_snapshot || row.sale_price }}</span>
+                          <span v-if="row.price_changed" class="price-change-hint"> (已变更)</span>
+                        </template>
+                      </el-table-column>
                       <el-table-column label="操作" width="100">
                         <template #default="{ row, $index }">
                           <el-button type="danger" size="small" @click="removeResourceFromGroup(groupIndex, $index)">
@@ -199,6 +211,18 @@
                     <el-table-column prop="name" label="资源名称" />
                     <el-table-column prop="unit" label="单位" width="100" />
                     <el-table-column prop="quantity" label="数量" width="100" />
+                    <el-table-column label="成本价" width="120">
+                      <template #default="{ row }">
+                        <span :class="{ 'price-changed': row.price_changed }">{{ row.cost_price_snapshot || row.cost_price }}</span>
+                        <span v-if="row.price_changed" class="price-change-hint"> (已变更)</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="售价" width="120">
+                      <template #default="{ row }">
+                        <span :class="{ 'price-changed': row.price_changed }">{{ row.sale_price_snapshot || row.sale_price }}</span>
+                        <span v-if="row.price_changed" class="price-change-hint"> (已变更)</span>
+                      </template>
+                    </el-table-column>
                   </el-table>
                 </div>
               </el-collapse-item>
@@ -416,7 +440,12 @@ const addResourceToGroup = (groupIndex) => {
     resource_id: selectedResourceId.value,
     name: resource.name,
     unit: resource.unit,
-    quantity: resourceQuantity.value
+    quantity: resourceQuantity.value,
+    cost_price: resource.cost_price,
+    sale_price: resource.sale_price,
+    cost_price_snapshot: resource.cost_price,
+    sale_price_snapshot: resource.sale_price,
+    price_changed: false
   })
   
   selectedResourceId.value = null
@@ -440,13 +469,26 @@ const saveProject = async () => {
       return
     }
     
+    // 准备发送给后端的数据，过滤掉不需要的字段
+    const projectData = {
+      name: formData.name,
+      project_date: formData.project_date,
+      groups: formData.groups.map(group => ({
+        name: group.name,
+        resources: group.resources.map(resource => ({
+          resource_id: resource.resource_id,
+          quantity: resource.quantity
+        }))
+      }))
+    }
+    
     let response
     if (formData.id) {
       // 编辑项目
-      response = await updateProject(formData.id, formData)
+      response = await updateProject(formData.id, projectData)
     } else {
       // 新增项目
-      response = await createProject(formData)
+      response = await createProject(projectData)
     }
     
     // 保存成功，因为响应拦截器只在成功时返回数据
@@ -460,9 +502,9 @@ const saveProject = async () => {
 }
 
 // 删除项目
-const deleteProject = async (projectId) => {
+const handleDeleteProject = async (projectId) => {
   try {
-    await deleteProjectAPI(projectId)
+    await deleteProject(projectId)
     ElMessage.success('项目删除成功')
     console.log('调用loadProjects函数获取最新项目列表')
     loadProjects()
@@ -529,4 +571,13 @@ const handleCurrentChange = (page) => {
   max-height: 400px;
   overflow-y: auto;
 }
+  .price-changed {
+    color: #f56c6c;
+    font-weight: bold;
+  }
+  
+  .price-change-hint {
+    color: #f56c6c;
+    font-size: 12px;
+  }
 </style>
