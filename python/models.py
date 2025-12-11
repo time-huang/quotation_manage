@@ -45,12 +45,14 @@ class Project:
                     group_resources = c.fetchall()
                     for gr in group_resources:
                         gr_dict = dict(gr)
-                        # 获取资源详情
-                        c.execute("SELECT * FROM resources WHERE id = ?", (gr_dict['resource_id'],))
+                        # 获取资源详情和快照信息
+                        c.execute("SELECT r.*, gr.cost_price_snapshot, gr.sale_price_snapshot, gr.quantity FROM resources r JOIN project_group_resources gr ON r.id = gr.resource_id WHERE gr.id = ?", (gr_dict['id'],))
                         resource = c.fetchone()
                         if resource:
                             resource_dict = dict(resource)
-                            resource_dict['quantity'] = gr_dict['quantity']
+                            # 计算价格是否有变化
+                            resource_dict['price_changed'] = (resource_dict['cost_price'] != resource_dict['cost_price_snapshot'] or 
+                                                           resource_dict['sale_price'] != resource_dict['sale_price_snapshot'])
                             group_dict['resources'].append(resource_dict)
                     project_dict['groups'].append(group_dict)
                 return project_dict
@@ -64,6 +66,7 @@ class Project:
     @staticmethod
     def create(project_data):
         """ 创建项目 """
+        print(f"创建项目，数据: {project_data}")
         conn = create_connection()
         if conn is not None:
             try:
@@ -73,29 +76,44 @@ class Project:
                 c = conn.cursor()
                 sql = ''' INSERT INTO projects(name, project_date)
                           VALUES(?,?) '''
+                print(f"执行SQL: {sql}, 参数: {(project_data['name'], project_data['project_date'])}")
                 c.execute(sql, (project_data['name'], project_data['project_date']))
                 project_id = c.lastrowid
+                print(f"项目创建成功，ID: {project_id}")
                 
                 # 创建项目分组和资源
                 if 'groups' in project_data and project_data['groups']:
+                    print(f"项目包含 {len(project_data['groups'])} 个分组")
                     for group in project_data['groups']:
+                        print(f"创建分组: {group['name']}")
                         # 创建分组
                         sql_group = ''' INSERT INTO project_groups(project_id, name)
                                       VALUES(?,?) '''
                         c.execute(sql_group, (project_id, group['name']))
                         group_id = c.lastrowid
+                        print(f"分组创建成功，ID: {group_id}")
                         
                         # 创建分组资源
                         if 'resources' in group and group['resources']:
+                            print(f"分组包含 {len(group['resources'])} 个资源")
                             for resource in group['resources']:
-                                sql_resource = ''' INSERT INTO project_group_resources(group_id, resource_id, quantity)
-                                                  VALUES(?,?,?) '''
-                                c.execute(sql_resource, (group_id, resource['resource_id'], resource['quantity']))
+                                print(f"处理资源: {resource['resource_id']}")
+                                # 获取资源当前价格作为快照
+                                c.execute("SELECT cost_price, sale_price FROM resources WHERE id = ?", (resource['resource_id'],))
+                                resource_data = c.fetchone()
+                                print(f"资源数据: {resource_data}")
+                                if resource_data:
+                                    sql_resource = ''' INSERT INTO project_group_resources(group_id, resource_id, quantity, cost_price_snapshot, sale_price_snapshot)
+                                                      VALUES(?,?,?,?,?) '''
+                                    params = (group_id, resource['resource_id'], resource['quantity'], 
+                                            resource_data['cost_price'], resource_data['sale_price'])
+                                    print(f"执行SQL: {sql_resource}, 参数: {params}")
+                                    c.execute(sql_resource, params)
                 
                 conn.commit()
                 return project_id
             except sqlite3.Error as e:
-                print(e)
+                print(f"SQLite错误: {e}")
                 conn.rollback()
                 return None
             finally:
@@ -105,6 +123,7 @@ class Project:
     @staticmethod
     def update(project_id, project_data):
         """ 更新项目 """
+        print(f"更新项目，ID: {project_id}, 数据: {project_data}")
         conn = create_connection()
         if conn is not None:
             try:
@@ -116,7 +135,9 @@ class Project:
                           SET name = ?,
                               project_date = ?
                           WHERE id = ? '''
+                print(f"执行SQL: {sql}, 参数: {(project_data['name'], project_data['project_date'], project_id)}")
                 c.execute(sql, (project_data['name'], project_data['project_date'], project_id))
+                print(f"更新项目主表成功")
                 
                 # 删除原有的分组和资源
                 c.execute("DELETE FROM project_group_resources WHERE group_id IN (SELECT id FROM project_groups WHERE project_id = ?)", (project_id,))
@@ -134,9 +155,14 @@ class Project:
                         # 创建分组资源
                         if 'resources' in group and group['resources']:
                             for resource in group['resources']:
-                                sql_resource = ''' INSERT INTO project_group_resources(group_id, resource_id, quantity)
-                                                  VALUES(?,?,?) '''
-                                c.execute(sql_resource, (group_id, resource['resource_id'], resource['quantity']))
+                                # 获取资源当前价格作为快照
+                                c.execute("SELECT cost_price, sale_price FROM resources WHERE id = ?", (resource['resource_id'],))
+                                resource_data = c.fetchone()
+                                if resource_data:
+                                    sql_resource = ''' INSERT INTO project_group_resources(group_id, resource_id, quantity, cost_price_snapshot, sale_price_snapshot)
+                                                      VALUES(?,?,?,?,?) '''
+                                    c.execute(sql_resource, (group_id, resource['resource_id'], resource['quantity'], 
+                                                           resource_data['cost_price'], resource_data['sale_price']))
                 
                 conn.commit()
                 return c.rowcount > 0

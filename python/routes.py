@@ -13,69 +13,94 @@ def get_projects():
 @api_bp.route('/projects/<int:project_id>', methods=['GET'])
 def get_project(project_id):
     """ 根据ID获取项目 """
+    print(f"收到获取项目详情请求，ID: {project_id}")
     project = Project.get_by_id(project_id)
     if project:
+        print(f"项目找到，返回数据")
         return jsonify({'success': True, 'data': project})
     else:
+        print(f"错误: 项目ID {project_id} 不存在")
         return jsonify({'success': False, 'message': 'Project not found'}), 404
 
 @api_bp.route('/projects', methods=['POST'])
 def create_project():
     """ 创建项目 """
+    print("收到创建项目请求")
     data = request.get_json()
+    print(f"请求数据: {data}")
     if not data:
+        print("错误: 没有提供数据")
         return jsonify({'success': False, 'message': 'No data provided'}), 400
     
     # 验证必填字段
     required_fields = ['name', 'project_date']
     for field in required_fields:
         if field not in data or not data[field]:
+            print(f"错误: 缺少必填字段: {field}")
             return jsonify({'success': False, 'message': f'Missing required field: {field}'}), 400
     
+    print("调用Project.create方法")
     project_id = Project.create(data)
     if project_id:
+        print(f"项目创建成功，ID: {project_id}")
         project = Project.get_by_id(project_id)
         return jsonify({'success': True, 'data': project}), 201
     else:
+        print("错误: 项目创建失败")
         return jsonify({'success': False, 'message': 'Failed to create project'}), 500
 
 @api_bp.route('/projects/<int:project_id>', methods=['PUT'])
 def update_project(project_id):
     """ 更新项目 """
+    print(f"收到更新项目请求，ID: {project_id}")
     data = request.get_json()
+    print(f"请求数据: {data}")
     if not data:
+        print("错误: 没有提供数据")
         return jsonify({'success': False, 'message': 'No data provided'}), 400
     
     # 验证项目是否存在
+    print(f"验证项目是否存在，ID: {project_id}")
     existing_project = Project.get_by_id(project_id)
     if not existing_project:
+        print(f"错误: 项目ID {project_id} 不存在")
         return jsonify({'success': False, 'message': 'Project not found'}), 404
     
     # 验证必填字段
     required_fields = ['name', 'project_date']
     for field in required_fields:
         if field not in data or not data[field]:
+            print(f"错误: 缺少必填字段: {field}")
             return jsonify({'success': False, 'message': f'Missing required field: {field}'}), 400
     
+    print("调用Project.update方法")
     success = Project.update(project_id, data)
     if success:
+        print(f"项目更新成功，ID: {project_id}")
         project = Project.get_by_id(project_id)
         return jsonify({'success': True, 'data': project})
     else:
+        print(f"错误: 项目更新失败，ID: {project_id}")
         return jsonify({'success': False, 'message': 'Failed to update project'}), 500
 
 @api_bp.route('/projects/<int:project_id>', methods=['DELETE'])
 def delete_project(project_id):
     """ 删除项目 """
+    print(f"收到删除项目请求，ID: {project_id}")
     # 验证项目是否存在
+    print(f"验证项目是否存在，ID: {project_id}")
     existing_project = Project.get_by_id(project_id)
     if not existing_project:
+        print(f"错误: 项目ID {project_id} 不存在")
         return jsonify({'success': False, 'message': 'Project not found'}), 404
     
+    print("调用Project.delete方法")
     success = Project.delete(project_id)
     if success:
+        print(f"项目删除成功，ID: {project_id}")
         return jsonify({'success': True, 'message': 'Project deleted successfully'})
     else:
+        print(f"错误: 项目删除失败，ID: {project_id}")
         return jsonify({'success': False, 'message': 'Failed to delete project'}), 500
 
 # 资源相关路由
