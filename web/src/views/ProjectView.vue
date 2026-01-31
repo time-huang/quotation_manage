@@ -129,19 +129,39 @@
                     </div>
                     
                     <!-- 已选择的资源 -->
-                    <el-table :data="group.resources" style="width: 100%; margin-top: 10px" border>
-                      <el-table-column prop="name" label="资源名称" />
-                      <el-table-column prop="unit" label="单位" width="100" />
-                      <el-table-column prop="quantity" label="数量" width="100" />
-                      <el-table-column label="操作" width="100">
-                        <template #default="{ row, $index }">
-                          <el-button type="danger" size="small" @click="removeResourceFromGroup(groupIndex, $index)">
-                            <el-icon><Delete /></el-icon>
-                            删除
-                          </el-button>
-                        </template>
-                      </el-table-column>
-                    </el-table>
+                  <el-table :data="group.resources" style="width: 100%; margin-top: 10px" border>
+                    <el-table-column prop="name" label="资源名称" />
+                    <el-table-column prop="unit" label="单位" width="100" />
+                    <el-table-column prop="quantity" label="数量" width="100" />
+                    <el-table-column label="成本价(快照)" width="120">
+                      <template #default="{ row }">
+                        <span :class="{ 'price-changed': row.cost_price !== row.snapshot_cost_price }">
+                          ¥{{ row.snapshot_cost_price?.toFixed(2) || row.cost_price?.toFixed(2) }}
+                        </span>
+                        <el-tooltip v-if="row.cost_price !== row.snapshot_cost_price" content="当前价格已变动" placement="top">
+                          <el-icon style="margin-left: 5px; color: #e6a23c"><Warning /></el-icon>
+                        </el-tooltip>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="销售价(快照)" width="120">
+                      <template #default="{ row }">
+                        <span :class="{ 'price-changed': row.sale_price !== row.snapshot_sale_price }">
+                          ¥{{ row.snapshot_sale_price?.toFixed(2) || row.sale_price?.toFixed(2) }}
+                        </span>
+                        <el-tooltip v-if="row.sale_price !== row.snapshot_sale_price" content="当前价格已变动" placement="top">
+                          <el-icon style="margin-left: 5px; color: #e6a23c"><Warning /></el-icon>
+                        </el-tooltip>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="100">
+                      <template #default="{ row, $index }">
+                        <el-button type="danger" size="small" @click="removeResourceFromGroup(groupIndex, $index)">
+                          <el-icon><Delete /></el-icon>
+                          删除
+                        </el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
                     
                     <!-- 删除分组按钮 -->
                     <div style="margin-top: 10px; text-align: right">
@@ -199,6 +219,26 @@
                     <el-table-column prop="name" label="资源名称" />
                     <el-table-column prop="unit" label="单位" width="100" />
                     <el-table-column prop="quantity" label="数量" width="100" />
+                    <el-table-column label="成本价(快照)" width="120">
+                      <template #default="{ row }">
+                        <span :class="{ 'price-changed': row.cost_price !== row.snapshot_cost_price }">
+                          ¥{{ row.snapshot_cost_price?.toFixed(2) || row.cost_price?.toFixed(2) }}
+                        </span>
+                        <el-tooltip v-if="row.cost_price !== row.snapshot_cost_price" content="当前价格已变动" placement="top">
+                          <el-icon style="margin-left: 5px; color: #e6a23c"><Warning /></el-icon>
+                        </el-tooltip>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="销售价(快照)" width="120">
+                      <template #default="{ row }">
+                        <span :class="{ 'price-changed': row.sale_price !== row.snapshot_sale_price }">
+                          ¥{{ row.snapshot_sale_price?.toFixed(2) || row.sale_price?.toFixed(2) }}
+                        </span>
+                        <el-tooltip v-if="row.sale_price !== row.snapshot_sale_price" content="当前价格已变动" placement="top">
+                          <el-icon style="margin-left: 5px; color: #e6a23c"><Warning /></el-icon>
+                        </el-tooltip>
+                      </template>
+                    </el-table-column>
                   </el-table>
                 </div>
               </el-collapse-item>
@@ -213,7 +253,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Plus, Edit, Delete, View } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, View, Warning } from '@element-plus/icons-vue'
 import { getProjects, getProject, createProject, updateProject, deleteProject as deleteProjectAPI, getResources } from '../utils/api'
 
 // 数据
@@ -416,7 +456,11 @@ const addResourceToGroup = (groupIndex) => {
     resource_id: selectedResourceId.value,
     name: resource.name,
     unit: resource.unit,
-    quantity: resourceQuantity.value
+    quantity: resourceQuantity.value,
+    cost_price: resource.cost_price,
+    sale_price: resource.sale_price,
+    snapshot_cost_price: resource.cost_price,
+    snapshot_sale_price: resource.sale_price
   })
   
   selectedResourceId.value = null
@@ -528,5 +572,11 @@ const handleCurrentChange = (page) => {
 .group-details {
   max-height: 400px;
   overflow-y: auto;
+}
+
+/* 价格变动提示样式 */
+.price-changed {
+  color: #f56c6c;
+  font-weight: bold;
 }
 </style>

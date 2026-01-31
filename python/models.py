@@ -51,6 +51,8 @@ class Project:
                         if resource:
                             resource_dict = dict(resource)
                             resource_dict['quantity'] = gr_dict['quantity']
+                            resource_dict['snapshot_cost_price'] = gr_dict['snapshot_cost_price']
+                            resource_dict['snapshot_sale_price'] = gr_dict['snapshot_sale_price']
                             group_dict['resources'].append(resource_dict)
                     project_dict['groups'].append(group_dict)
                 return project_dict
@@ -88,9 +90,19 @@ class Project:
                         # 创建分组资源
                         if 'resources' in group and group['resources']:
                             for resource in group['resources']:
-                                sql_resource = ''' INSERT INTO project_group_resources(group_id, resource_id, quantity)
-                                                  VALUES(?,?,?) '''
-                                c.execute(sql_resource, (group_id, resource['resource_id'], resource['quantity']))
+                                # 获取资源的当前价格作为快照
+                                c.execute("SELECT cost_price, sale_price FROM resources WHERE id = ?", (resource['resource_id'],))
+                                resource_prices = c.fetchone()
+                                if resource_prices:
+                                    snapshot_cost_price = resource_prices['cost_price']
+                                    snapshot_sale_price = resource_prices['sale_price']
+                                else:
+                                    snapshot_cost_price = 0
+                                    snapshot_sale_price = 0
+                                
+                                sql_resource = ''' INSERT INTO project_group_resources(group_id, resource_id, quantity, snapshot_cost_price, snapshot_sale_price)
+                                                  VALUES(?,?,?,?,?) '''
+                                c.execute(sql_resource, (group_id, resource['resource_id'], resource['quantity'], snapshot_cost_price, snapshot_sale_price))
                 
                 conn.commit()
                 return project_id
@@ -134,9 +146,30 @@ class Project:
                         # 创建分组资源
                         if 'resources' in group and group['resources']:
                             for resource in group['resources']:
-                                sql_resource = ''' INSERT INTO project_group_resources(group_id, resource_id, quantity)
-                                                  VALUES(?,?,?) '''
-                                c.execute(sql_resource, (group_id, resource['resource_id'], resource['quantity']))
+                                # 获取资源ID（支持resource_id和id两种字段名）
+                                resource_id = resource.get('resource_id') or resource.get('id')
+                                if not resource_id:
+                                    continue  # 跳过没有ID的资源
+                                
+                                # 检查是否是新添加的资源（没有snapshot信息）
+                                if 'snapshot_cost_price' not in resource or 'snapshot_sale_price' not in resource:
+                                    # 获取资源的当前价格作为快照
+                                    c.execute("SELECT cost_price, sale_price FROM resources WHERE id = ?", (resource_id,))
+                                    resource_prices = c.fetchone()
+                                    if resource_prices:
+                                        snapshot_cost_price = resource_prices['cost_price']
+                                        snapshot_sale_price = resource_prices['sale_price']
+                                    else:
+                                        snapshot_cost_price = 0
+                                        snapshot_sale_price = 0
+                                else:
+                                    # 使用已有的快照价格
+                                    snapshot_cost_price = resource['snapshot_cost_price']
+                                    snapshot_sale_price = resource['snapshot_sale_price']
+                                
+                                sql_resource = ''' INSERT INTO project_group_resources(group_id, resource_id, quantity, snapshot_cost_price, snapshot_sale_price)
+                                                  VALUES(?,?,?,?,?) '''
+                                c.execute(sql_resource, (group_id, resource_id, resource['quantity'], snapshot_cost_price, snapshot_sale_price))
                 
                 conn.commit()
                 return c.rowcount > 0
